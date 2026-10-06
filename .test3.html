@@ -1,0 +1,19 @@
+<!DOCTYPE html><meta charset="utf-8"><body style="font:14px monospace">
+<div id="log">…</div><iframe id="f" src="/" style="width:360px;height:520px"></iframe>
+<script>
+const put = (t) => document.getElementById('log').textContent += '\n' + t;
+document.getElementById('f').onload = () => setTimeout(async () => {
+  const regs = await navigator.serviceWorker.getRegistrations();
+  put('service workers registrados: ' + regs.length + (regs[0] ? ' (' + regs[0].scope + ')' : ''));
+  await new Promise(r => setTimeout(r, 1500));
+  const claves = await caches.keys();
+  put('cachés: ' + JSON.stringify(claves));
+  for (const k of claves) {
+    const c = await caches.open(k);
+    const req = await c.keys();
+    put(k + ' -> ' + req.length + ' archivos guardados');
+    put(req.map(r => new URL(r.url).pathname).join(' '));
+  }
+  put('FIN');
+}, 1200);
+</script>

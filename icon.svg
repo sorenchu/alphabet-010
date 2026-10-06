@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#ffd75e"/>
+  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle"
+        font-family="Comic Sans MS, Trebuchet MS, sans-serif" font-weight="bold"
+        font-size="230" fill="#ff7fa8">A<tspan fill="#58bdf0">a</tspan></text>
+  <text x="50%" y="84%" text-anchor="middle" dominant-baseline="middle"
+        font-family="Comic Sans MS, Trebuchet MS, sans-serif" font-weight="bold"
+        font-size="110" fill="#6fd18a">123</text>
+</svg>

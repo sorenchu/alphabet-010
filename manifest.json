@@ -1,0 +1,15 @@
+{
+  "name": "A jugar con las letras",
+  "short_name": "ABC 123",
+  "description": "Juego para aprender letras mayúsculas, minúsculas y números.",
+  "lang": "es",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#fff4d6",
+  "theme_color": "#ffd977",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
