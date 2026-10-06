@@ -78,12 +78,12 @@
   <header class="barra">
     <button class="barra-btn" data-ir="home" aria-label="Volver al inicio">🏠</button>
     <div class="barra-centro estrellas" id="estrellas"></div>
-    <button class="barra-btn" id="btn-juego-tipo" aria-label="Cambiar entre letras y números">🔤</button>
+    <button class="barra-btn" id="btn-juego-tipo" aria-label="Cambiar de juego: letras, números o qué número va en medio">🔤</button>
   </header>
 
   <button class="consigna" id="consigna">
     <span class="consigna-icono">🔊</span>
-    <span class="consigna-texto">¿Dónde está la&nbsp;<b id="consigna-glifo">A</b>?</span>
+    <span class="consigna-texto" id="consigna-texto">¿Dónde está la&nbsp;<b>A</b>?</span>
   </button>
 
   <div class="opciones" id="opciones"></div>
@@ -137,6 +137,15 @@
         <button data-valor="3">3</button>
         <button data-valor="4">4</button>
       </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Dificultad del juego</legend>
+      <div class="ops" data-ajuste="nivel">
+        <button data-valor="facil">🐣 Fácil</button>
+        <button data-valor="dificil">🦊 Difícil</button>
+      </div>
+      <p class="pista">Difícil: la pregunta solo se oye (no se ve qué buscar), las opciones se parecen entre sí (b/d/p, m/n, 6/9…) y el número que falta puede ir antes, en medio o después.</p>
     </fieldset>
 
     <fieldset>

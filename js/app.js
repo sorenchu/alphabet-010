@@ -18,7 +18,7 @@ const mezclar = (arr) => {
 
 /* ─────────────────────────── ajustes ─────────────────────────── */
 
-const AJUSTES_POR_DEFECTO = { caso: 'ambas', maxNumero: 10, opciones: 2, voz: 'si' };
+const AJUSTES_POR_DEFECTO = { caso: 'ambas', maxNumero: 10, opciones: 2, voz: 'si', nivel: 'facil' };
 let ajustes = { ...AJUSTES_POR_DEFECTO };
 
 function cargarAjustes() {
@@ -132,12 +132,15 @@ function pintarTarjeta({ hablar = false } = {}) {
   if (hablar) decirActual();
 }
 
+/* Silencio (ms) entre «a» y «a de Árbol» al recorrer el abecedario. */
+const PAUSA_LETRA = 900;
+
 function decirActual() {
   const item = actual();
   if (item.valor !== undefined) {
     contar(item.valor);
   } else {
-    Voz.hablar(`${item.voz}. ${item.voz} de ${item.palabra}`);
+    Voz.secuencia([item.voz, `${item.voz} de ${item.palabra}`], { pausa: PAUSA_LETRA });
   }
 }
 
@@ -230,17 +233,63 @@ activarDeslizar($('#screen-explorar'), mover);
 const juego = { tipo: 'letras', objetivo: null, aciertos: 0, ronda: 0, bloqueado: false };
 
 const elOpciones = $('#opciones');
-const elConsigna = $('#consigna-glifo');
+const elConsigna = $('#consigna-texto');
+
+/* Tres juegos: buscar una letra, buscar un número y adivinar qué número va
+   entre otros dos (3 _ 5 → 4). El botón de la barra los recorre en orden. */
+const TIPOS_JUEGO = ['letras', 'numeros', 'entre'];
+const ICONOS_JUEGO = { letras: '🔤', numeros: '🔢', entre: '↔️' };
 
 function pilaJuego() {
   return juego.tipo === 'letras' ? LETRAS : mazoNumeros().filter((n) => n.valor > 0);
 }
 
-function nuevaRonda() {
-  juego.bloqueado = false;
-  juego.ronda++;
+/* Nivel difícil (se elige en Ajustes): la consigna solo se oye, las opciones
+   equivocadas se parecen a la buena y en «entre» el hueco puede ir en
+   cualquier sitio. El nivel fácil es el juego de siempre. */
+const esDificil = () => ajustes.nivel === 'dificil';
+const HUECO = '<b class="hueco" id="hueco">?</b>';
 
+function seParecen(a, b) {
+  if (a.valor !== undefined) {
+    return Math.abs(a.valor - b.valor) <= 2 || [a.ch, b.ch].sort().join('') === '69';
+  }
+  return LETRAS_PARECIDAS.some((g) => g.includes(a.ch) && g.includes(b.ch));
+}
+
+/* Opciones equivocadas: al azar en fácil; en difícil, primero las parecidas. */
+function distractores(objetivo, pila, cuantos) {
+  const resto = pila.filter((x) => x.ch !== objetivo.ch);
+  if (!esDificil()) return mezclar(resto).slice(0, cuantos);
+  const parecidos = mezclar(resto.filter((x) => seParecen(objetivo, x)));
+  const otros = mezclar(resto.filter((x) => !seParecen(objetivo, x)));
+  return parecidos.concat(otros).slice(0, cuantos);
+}
+
+/* «Entre»: se ve una serie de tres números seguidos con un hueco. En fácil el
+   hueco va siempre en medio (3 ? 5); en difícil también puede ir al principio
+   (? 4 5) o al final (3 4 ?). Las opciones equivocadas pueden incluir los
+   números que se ven en la pregunta, que es justo la confusión a trabajar. */
+function elegirEntre() {
+  const todos = mazoNumeros();
+  const pos = esDificil() ? azar([0, 1, 2]) : 1;
+  const posibles = todos.filter((x) => x.valor - pos >= 0
+    && x.valor - pos + 2 <= ajustes.maxNumero && x.ch !== juego.objetivo?.ch);
+  const objetivo = azar(posibles);
+  const inicio = objetivo.valor - pos;
+  juego.serie = [inicio, inicio + 1, inicio + 2];
+  juego.hueco = pos;
+  const n = Math.min(ajustes.opciones, todos.length);
+  return { objetivo, elegidos: mezclar([objetivo, ...distractores(objetivo, todos, n - 1)]) };
+}
+
+function elegirBuscar() {
   const pila = pilaJuego();
+  if (esDificil()) {
+    const n = Math.min(ajustes.opciones, pila.length);
+    const objetivo = azar(pila.filter((x) => x.ch !== juego.objetivo?.ch));
+    return { objetivo, elegidos: mezclar([objetivo, ...distractores(objetivo, pila, n - 1)]) };
+  }
   const n = Math.min(ajustes.opciones, pila.length);
   const elegidos = mezclar(pila).slice(0, n);
   // Evitamos repetir el mismo objetivo dos veces seguidas si se puede.
@@ -248,6 +297,15 @@ function nuevaRonda() {
   if (elegidos.length > 1 && juego.objetivo && objetivo.ch === juego.objetivo.ch) {
     objetivo = azar(elegidos.filter((x) => x.ch !== objetivo.ch));
   }
+  return { objetivo, elegidos };
+}
+
+function nuevaRonda() {
+  juego.bloqueado = false;
+  juego.ronda++;
+
+  const { objetivo, elegidos } = juego.tipo === 'entre' ? elegirEntre() : elegirBuscar();
+  const n = elegidos.length;
   juego.objetivo = objetivo;
 
   // Con "ambas", la consigna va en mayúscula y las opciones alternan de caso:
@@ -257,7 +315,15 @@ function nuevaRonda() {
     ? ajustes.caso
     : (juego.ronda % 2 === 0 ? 'mayus' : 'minus');
 
-  elConsigna.innerHTML = textoGlifo(objetivo, casoConsigna);
+  if (juego.tipo === 'entre') {
+    elConsigna.innerHTML = juego.serie
+      .map((v, i) => (i === juego.hueco ? HUECO : `<b>${v}</b>`)).join('');
+  } else {
+    // En difícil no se enseña qué hay que buscar: solo se oye.
+    const art = objetivo.valor !== undefined ? 'el' : 'la';
+    const glifo = esDificil() ? HUECO : `<b>${textoGlifo(objetivo, casoConsigna)}</b>`;
+    elConsigna.innerHTML = `¿Dónde está ${art}&nbsp;${glifo}?`;
+  }
 
   elOpciones.dataset.n = n;
   elOpciones.innerHTML = '';
@@ -275,7 +341,14 @@ function nuevaRonda() {
 function decirConsigna() {
   const o = juego.objetivo;
   if (!o) return;
-  if (o.valor !== undefined) Voz.hablar(`¿Dónde está el ${o.voz}?`);
+  if (juego.tipo === 'entre') {
+    const [a, b, c] = juego.serie.map((v) => NOMBRES_NUMERO[v]);
+    Voz.hablar([
+      `¿Qué número va antes del ${b}?`,
+      `¿Qué número va entre el ${a} y el ${c}?`,
+      `¿Qué número va después del ${b}?`,
+    ][juego.hueco]);
+  } else if (o.valor !== undefined) Voz.hablar(`¿Dónde está el ${o.voz}?`);
   else Voz.hablar(`¿Dónde está la ${o.voz}?`);
 }
 
@@ -297,7 +370,18 @@ async function responder(item, boton) {
   confeti(juego.aciertos >= 5 ? 40 : 12);
 
   const o = juego.objetivo;
-  await Voz.hablar(`${azar(ELOGIOS)} ${o.valor !== undefined ? 'El' : 'La'} ${o.voz}.`);
+  // Si la pregunta tenía hueco, se rellena con la respuesta.
+  const hueco = $('#hueco');
+  if (hueco) {
+    hueco.textContent = textoGlifo(o, ajustes.caso === 'minus' ? 'minus' : 'mayus');
+    hueco.classList.add('lleno');
+  }
+  if (juego.tipo === 'entre') {
+    // Contamos los tres seguidos: «tres, cuatro, cinco».
+    await Voz.hablar(`${azar(ELOGIOS)} ${juego.serie.map((v) => NOMBRES_NUMERO[v]).join(', ')}.`);
+  } else {
+    await Voz.hablar(`${azar(ELOGIOS)} ${o.valor !== undefined ? 'El' : 'La'} ${o.voz}.`);
+  }
 
   if (juego.aciertos >= 5) {
     juego.aciertos = 0;
@@ -315,8 +399,8 @@ function pintarEstrellas() {
 
 $('#consigna').addEventListener('click', decirConsigna);
 $('#btn-juego-tipo').addEventListener('click', () => {
-  juego.tipo = juego.tipo === 'letras' ? 'numeros' : 'letras';
-  $('#btn-juego-tipo').textContent = juego.tipo === 'letras' ? '🔤' : '🔢';
+  juego.tipo = TIPOS_JUEGO[(TIPOS_JUEGO.indexOf(juego.tipo) + 1) % TIPOS_JUEGO.length];
+  $('#btn-juego-tipo').textContent = ICONOS_JUEGO[juego.tipo];
   juego.objetivo = null;
   nuevaRonda();
 });
@@ -449,12 +533,24 @@ function confeti(cantidad = 20) {
 const modal = $('#modal-ajustes');
 let tempAjustes = null;
 
-$('#btn-ajustes').addEventListener('pointerdown', (e) => {
+/* Pulsación larga: el niño no la encuentra. En iPad/iPhone, Safari lanza su
+   propio gesto de pulsación larga (menú, lupa) y manda un `pointercancel` sin
+   que se haya levantado el dedo; por eso solo cancelamos al soltar de verdad
+   (o al sacar el ratón del botón) y bloqueamos los gestos del sistema. */
+const gear = $('#btn-ajustes');
+
+gear.addEventListener('pointerdown', (e) => {
   e.preventDefault();
-  tempAjustes = setTimeout(abrirAjustes, 800);   // pulsación larga: el niño no la encuentra
+  clearTimeout(tempAjustes);
+  tempAjustes = setTimeout(abrirAjustes, 800);
 });
-['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) =>
-  $('#btn-ajustes').addEventListener(ev, () => clearTimeout(tempAjustes)));
+gear.addEventListener('pointerup', () => clearTimeout(tempAjustes));
+gear.addEventListener('pointerleave', (e) => {
+  if (e.pointerType === 'mouse') clearTimeout(tempAjustes);
+});
+gear.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+gear.addEventListener('touchend', () => clearTimeout(tempAjustes));
+gear.addEventListener('contextmenu', (e) => e.preventDefault());
 
 function abrirAjustes() {
   modal.hidden = false;

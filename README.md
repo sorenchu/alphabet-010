@@ -27,7 +27,7 @@ conexión y no se envía ningún dato a ninguna parte.
 |---|---|
 | 🔤 **Letras** | Las 27 letras del abecedario (incluida la Ñ) con su dibujo y su palabra: «A, a de Árbol». Al tocar la tarjeta lo repite. |
 | 🔢 **Números** | Del 0 al 10 (o al 5 / 20, configurable). Al tocarlos cuenta en voz alta y los dibujitos van saltando de uno en uno. |
-| 🎯 **Encuentra** | Juego de escucha: «¿Dónde está la A?». Se acierta tocando la letra correcta. Con 2, 3 o 4 opciones. Cada 5 aciertos, ¡fiesta de confeti! |
+| 🎯 **Encuentra** | Juego de escucha: «¿Dónde está la A?». Se acierta tocando la letra correcta. Con 2, 3 o 4 opciones. Cada 5 aciertos, ¡fiesta de confeti! El botón de arriba a la derecha cambia de juego: 🔤 letras, 🔢 números y ↔️ **¿qué número va en medio?** («3 ? 5» → 4; al acertar cuenta los tres seguidos). |
 | ✏️ **Dibuja** | Repasar con el dedo la letra o el número que aparece de fondo, en seis colores. |
 
 ### Detalles pensados para tres años
@@ -50,6 +50,11 @@ elegir:
 - cómo se muestran las letras: `A a`, solo `A` o solo `a`;
 - hasta qué número: 5, 10 o 20;
 - cuántas opciones tiene el juego: 2, 3 o 4 (empezar con 2);
+- dificultad del juego: 🐣 **Fácil** (por defecto) o 🦊 **Difícil**, para cuando
+  ya domine lo básico. En difícil la pregunta solo se oye (en lugar de «¿Dónde
+  está la A?» se ve «¿Dónde está la ?»), las opciones se parecen entre sí
+  (b/d/p/q, m/n/ñ, E/F, números vecinos, 6/9…) y en «¿qué número va?» el hueco
+  puede ir antes, en medio o después («? 4 5», «3 ? 5», «3 4 ?»);
 - voz encendida o apagada.
 
 Los ajustes se guardan en el propio navegador.

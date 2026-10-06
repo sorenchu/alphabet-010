@@ -55,25 +55,31 @@ const Voz = (() => {
       u.onend = fin;
       u.onerror = fin;
       // Red de seguridad: si el motor se atasca, no dejamos la promesa colgada.
-      setTimeout(fin, 400 + texto.length * 110);
+      // Holgada para que con frases muy cortas («a») no se dé por terminada antes de tiempo.
+      setTimeout(fin, 1000 + texto.length * 110);
       if (id !== colaId) return fin();
       try { sintesis.speak(u); } catch (_) { fin(); }
     });
   }
 
-  /* Dice una lista de frases una detrás de otra, con una pausa entre ellas. */
+  /* Dice una lista de frases una detrás de otra, con una pausa entre ellas.
+     Si mientras tanto se dice otra cosa o se manda callar, la secuencia se
+     abandona (para no soltar la segunda frase de una letra que ya no está). */
   async function secuencia(frases, opciones = {}) {
     const { pausa = 120 } = opciones;
-    for (const frase of frases) {
-      await hablar(frase, { ...opciones, encolar: false });
-      if (pausa) await new Promise((r) => setTimeout(r, pausa));
+    for (let i = 0; i < frases.length; i++) {
+      const dicho = hablar(frases[i], { ...opciones, encolar: false });
+      const id = colaId;                 // hablar() acaba de reservar este turno
+      await dicho;
+      if (pausa && i < frases.length - 1) await new Promise((r) => setTimeout(r, pausa));
+      if (id !== colaId) return;
     }
   }
 
   return {
     hablar,
     secuencia,
-    callar() { if (sintesis) sintesis.cancel(); },
+    callar() { colaId++; if (sintesis) sintesis.cancel(); },
     activar(v) { activa = !!v; if (!activa) this.callar(); },
     get disponible() { return !!sintesis; },
     get tieneVozEspanola() { return !!vozEs; },

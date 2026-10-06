@@ -49,6 +49,20 @@ const NUMEROS = NOMBRES_NUMERO.map((nombre, n) => ({
   valor: n,
 }));
 
+/* Letras que se confunden fácilmente (por forma en mayúscula o en minúscula,
+   o porque suenan parecido). En el nivel difícil las opciones salen de aquí. */
+const LETRAS_PARECIDAS = [
+  ['B', 'D', 'P', 'Q', 'R'],
+  ['M', 'N', 'Ñ', 'W'],
+  ['E', 'F', 'T'],
+  ['C', 'G', 'O', 'Q'],
+  ['U', 'V', 'W', 'Y'],
+  ['I', 'L', 'J', 'T'],
+  ['K', 'X', 'Y'],
+  ['S', 'Z'],
+  ['A', 'H'],
+];
+
 const ELOGIOS = [
   '¡Muy bien!', '¡Genial!', '¡Perfecto!', '¡Lo lograste!', '¡Qué bien!',
   '¡Eso es!', '¡Fantástico!', '¡Campeón!', '¡Bravo!',

@@ -139,6 +139,8 @@ button {
   transition: opacity .2s, transform .2s;
 }
 .gear:active { opacity: 1; transform: rotate(90deg); }
+/* Sin menú ni lupa de iOS al mantenerlo pulsado. */
+.gear { -webkit-touch-callout: none; touch-action: none; }
 
 /* ───────────────────────── barra superior ───────────────────────── */
 
@@ -299,6 +301,25 @@ button {
   font-size: 1.5em;
   color: var(--rosa);
   vertical-align: middle;
+}
+
+/* «Entre»: 3 ? 5 — el hueco es una casilla discontinua que se rellena al acertar. */
+.consigna-texto b + b { margin-left: .35em; }
+.consigna-texto .hueco {
+  display: inline-block;
+  min-width: 1.3em;
+  padding: 0 .15em;
+  text-align: center;
+  border: .12em dashed var(--morado);
+  border-radius: .4em;
+  color: var(--morado);
+  line-height: 1.1;
+}
+.consigna-texto .hueco.lleno {
+  border-style: solid;
+  border-color: var(--verde);
+  color: var(--verde);
+  animation: bien .6s ease-out;
 }
 
 .opciones {

@@ -1,5 +1,5 @@
 /* Service worker mínimo: guarda la aplicación para que funcione sin conexión. */
-const CACHE = 'abc123-v1';
+const CACHE = 'abc123-v5';
 const ARCHIVOS = [
   './', './index.html', './css/styles.css',
   './js/data.js', './js/speech.js', './js/app.js',
